@@ -28,11 +28,14 @@ amount = st.number_input("סכום השקעה ($)", min_value=1, step=1, value=1
 
 if st.button("קבל תחזית"):
     try:
+        # הגדרת הטיקר מתוך הבחירה
         ticker = stocks[selected_stock]
+
+        # הורדת נתונים
         data = yf.download(ticker, period='1d', interval='1m')
-        
+
         if data.empty or 'Close' not in data.columns:
-            raise ValueError("לא נמצאו נתונים תקפים")
+            raise ValueError("אין נתוני סגירה זמינים")
 
         # חישוב ממוצעים נעים
         data['SMA5'] = data['Close'].rolling(window=5).mean()
@@ -47,7 +50,6 @@ if st.button("קבל תחזית"):
         else:
             trend = "מכירה 🔽"
 
-        # חיזוי רווח לפי מגמה
         predicted_price = current_price * (1.01 if "קנייה" in trend else 0.99)
         profit = predicted_price * amount / current_price - amount
 
