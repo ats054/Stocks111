@@ -20,6 +20,7 @@ stocks = {
     'מדד US Tech 100': '^NDX'
 }
 
+# טווחים לא משפיעים על החיזוי כרגע, רק בעתיד לשדרוג
 times = ['1 דקה', '5 דקות', '10 דקות', '30 דקות', 'שעה', 'יום', 'שבוע']
 
 selected_stock = st.selectbox("בחר נכס", list(stocks.keys()))
@@ -30,38 +31,34 @@ def get_trend(data):
     try:
         data['SMA5'] = data['Close'].rolling(window=5).mean()
         data['SMA20'] = data['Close'].rolling(window=20).mean()
+        if len(data) < 20:
+            return "אין מספיק נתונים למגמה"
         if pd.isna(data['SMA5'].iloc[-1]) or pd.isna(data['SMA20'].iloc[-1]):
-            return "לא ניתן לחזות כרגע"
+            return "לא ניתן לחשב מגמה כרגע"
         elif data['SMA5'].iloc[-1] > data['SMA20'].iloc[-1]:
             return "קנייה 🔼"
         else:
             return "מכירה 🔽"
     except Exception as e:
-        return "לא ניתן לחזות כרגע"
+        return f"שגיאה בחישוב מגמה: {str(e)}"
 
 if st.button("קבל תחזית"):
     try:
         ticker = stocks[selected_stock]
-        interval = "1m"  # אפשר לשפר זאת לפי selected_time בעתיד
-        data = yf.download(ticker, period='1d', interval=interval)
-        if data.empty or 'Close' not in data:
-            raise ValueError("אין נתוני סגירה זמינים")
+        data = yf.download(ticker, period='1d', interval='1m')
+        if data.empty:
+            raise ValueError("לא התקבלו נתונים")
+        if 'Close' not in data.columns:
+            raise ValueError("אין עמודת Close זמינה")
 
         current_price = data['Close'].iloc[-1]
         trend = get_trend(data)
-        if trend == "קנייה 🔼":
-            predicted_price = current_price * 1.02
-        elif trend == "מכירה 🔽":
-            predicted_price = current_price * 0.98
-        else:
-            predicted_price = current_price
-
+        predicted_price = current_price * (1.01 if "קנייה" in trend else 0.99)
         profit = predicted_price * amount / current_price - amount
 
         st.success(f"תחזית ל-{selected_stock} בטווח {selected_time}: {trend}")
-        st.info(f'רווח/הפסד צפוי: ${profit:.2f} (סה"כ: ${amount + profit:.2f})')
-
-        st.line_chart(data['Close'])  # גרף של תנועת המחיר
+        st.info(f'רווח/הפסד צפוי: ${profit:.2f} (סה"כ: ${amount + profit:.2f})")
+        st.line_chart(data['Close'])
 
     except Exception as e:
-        st.error(f"אירעה שגיאה בחיזוי הנתונים: {str(e)}")
+        st.error(f"שגיאה: {str(e)}")
