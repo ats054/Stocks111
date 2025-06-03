@@ -64,7 +64,7 @@ if st.button("קבל תחזית"):
         confidence = calculate_confidence(sma5, sma20)
 
         current_price = data['Close'].iloc[-1]
-        predicted_price = current_price * (1 + 0.01 if trend == "קנייה 🔼" else 1 - 0.01)
+        predicted_price = current_price * (1.01 if trend == "קנייה 🔼" else 0.99)  # ✅ תיקון כאן!
         profit = predicted_price * amount / current_price - amount
 
         # הצגת תחזית, רווח, ורמת ביטחון
