@@ -39,7 +39,7 @@ def get_trend(data):
     data['SMA5'] = data['Close'].rolling(window=5).mean()
     data['SMA20'] = data['Close'].rolling(window=20).mean()
     if pd.isna(data['SMA5'].iloc[-1]) or pd.isna(data['SMA20'].iloc[-1]):
-        return "אין מספיק נתונים"
+        return "לא זמין"
     return "קנייה 🔼" if data['SMA5'].iloc[-1] > data['SMA20'].iloc[-1] else "מכירה 🔽"
 
 if st.button("קבל תחזית"):
