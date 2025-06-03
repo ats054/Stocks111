@@ -29,4 +29,4 @@ if st.button("קבל תחזית"):
     expected_return = amount * 1.02
     profit = expected_return - amount
     st.success(f"תחזית ל-{selected_stock} בטווח {selected_time}: קנייה 🔼")
-    st.info(f"רווח/הפסד צפוי: ${profit:.2f} (סה"כ: ${expected_return:.2f})")
+st.info(f"רווח/הפסד צפוי: ${profit:.2f} (סה"כ: ${expected_return:.2f})")
