@@ -3,7 +3,31 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 
-# פונקציה לחישוב רמת ביטחון
+st.set_page_config(page_title="תחזית בינה מלאכותית - זהב, מניות וקריפטו", layout="centered")
+st.title("🤖 תחזית חכמה - זהב, מניות וקריפטו")
+st.write("בחר נכס, טווח זמן וסכום השקעה - וקבל תחזית, גרף, רווח צפוי ורמת ביטחון.")
+
+stocks = {
+    'נאסד"ק (NASDAQ)': '^IXIC',
+    'S&P 500': '^GSPC',
+    'זהב (Gold)': 'GC=F',
+    'נאסד"ק 100 (NDX)': '^NDX',
+    'ת"א 35': 'TA35.TA',
+    'Nvidia': 'NVDA',
+    'ביטקוין (Bitcoin)': 'BTC-USD',
+    "את'ריום (Ethereum)": 'ETH-USD'
+}
+
+intervals = {
+    '1 דקה': '1m',
+    '5 דקות': '5m',
+    '10 דקות': '15m',
+    '30 דקות': '30m',
+    'שעה': '60m',
+    'יום': '1d',
+    'שבוע': '1wk'
+}
+
 def calculate_confidence(data):
     confidence = 0
     total_indicators = 3
@@ -30,33 +54,6 @@ def calculate_confidence(data):
 
     return round((confidence / total_indicators) * 100)
 
-# רשימת נכסים
-stocks = {
-    'נאסד"ק (NASDAQ)': '^IXIC',
-    'S&P 500': '^GSPC',
-    'זהב (Gold)': 'GC=F',
-    'נאסד"ק 100 (NDX)': '^NDX',
-    'ת"א 35': 'TA35.TA',
-    'Nvidia': 'NVDA',
-    'ביטקוין (Bitcoin)': 'BTC-USD',
-    "את'ריום (Ethereum)": 'ETH-USD'
-}
-
-intervals = {
-    '1 דקה': '1m',
-    '5 דקות': '5m',
-    '10 דקות': '15m',
-    '30 דקות': '30m',
-    'שעה': '60m',
-    'יום': '1d',
-    'שבוע': '1wk'
-}
-
-# ממשק משתמש
-st.set_page_config(page_title="תחזית בינה מלאכותית - מדויקת", layout="centered")
-st.title("🤖 תחזית חכמה - זהב, מניות וקריפטו")
-st.write("בחר נכס, טווח זמן וסכום השקעה - ותקבל תחזית מדויקת + רמת ביטחון.")
-
 selected_stock = st.selectbox("בחר נכס", list(stocks.keys()))
 selected_interval_label = st.selectbox("בחר טווח זמן", list(intervals.keys()))
 amount = st.number_input("סכום השקעה ($)", min_value=1, value=1000)
@@ -79,5 +76,7 @@ if st.button("קבל תחזית"):
         st.success(f"תחזית ל-{selected_stock} בטווח {selected_interval_label}: {recommendation}")
         st.info(f"סכום השקעה: ${amount} | רווח/הפסד צפוי: ${profit:.2f}")
         st.warning(f"רמת ביטחון בתחזית: {confidence}%")
+        st.line_chart(data['Close'])
+
     except Exception as e:
         st.error(f"אירעה שגיאה: {e}")
