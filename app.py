@@ -4,7 +4,7 @@ import streamlit as st
 st.set_page_config(page_title="תחזית זהב, מניות וקריפטו", layout="centered")
 st.title("🔮 תחזית חכמה - זהב, מניות, קריפטו ו־Plus500")
 st.write("בחר נכס, טווח זמן וסכום השקעה - וקבל תחזית עם חיווי מיידי.")
-
+ 
 stocks = {
     'נאסד"ק (NASDAQ)': '^IXIC',
     'S&P 500': '^GSPC',
