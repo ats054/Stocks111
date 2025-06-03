@@ -3,7 +3,7 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 
-# פונקציה לחישוב רמת ביטחון לפי אינדיקטורים טכניים פשוטים
+# פונקציה לחישוב רמת ביטחון
 def calculate_confidence(data):
     confidence = 0
     total_indicators = 3
@@ -30,7 +30,7 @@ def calculate_confidence(data):
 
     return round((confidence / total_indicators) * 100)
 
-# נכסים זמינים
+# רשימת נכסים
 stocks = {
     'נאסד"ק (NASDAQ)': '^IXIC',
     'S&P 500': '^GSPC',
@@ -42,7 +42,6 @@ stocks = {
     "את'ריום (Ethereum)": 'ETH-USD'
 }
 
-# טווחי זמן
 intervals = {
     '1 דקה': '1m',
     '5 דקות': '5m',
@@ -68,7 +67,7 @@ if st.button("קבל תחזית"):
         interval = intervals[selected_interval_label]
         data = yf.download(symbol, period='5d', interval=interval)
 
-        if data.empty or 'Close' not in data:
+        if data.empty:
             raise ValueError("אין נתוני סגירה זמינים")
 
         current_price = data['Close'].iloc[-1]
