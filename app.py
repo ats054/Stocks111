@@ -27,22 +27,26 @@ selected_time = st.selectbox("בחר טווח זמן", times)
 amount = st.number_input("סכום השקעה ($)", min_value=1, step=1, value=1000)
 
 def get_trend(data):
-    data['SMA5'] = data['Close'].rolling(window=5).mean()
-    data['SMA20'] = data['Close'].rolling(window=20).mean()
-    if pd.isna(data['SMA5'].iloc[-1]) or pd.isna(data['SMA20'].iloc[-1]):
+    try:
+        data['SMA5'] = data['Close'].rolling(window=5).mean()
+        data['SMA20'] = data['Close'].rolling(window=20).mean()
+        if pd.isna(data['SMA5'].iloc[-1]) or pd.isna(data['SMA20'].iloc[-1]):
+            return "לא ניתן לחזות כרגע"
+        elif data['SMA5'].iloc[-1] > data['SMA20'].iloc[-1]:
+            return "קנייה 🔼"
+        else:
+            return "מכירה 🔽"
+    except Exception as e:
         return "לא ניתן לחזות כרגע"
-    elif data['SMA5'].iloc[-1] > data['SMA20'].iloc[-1]:
-        return "קנייה 🔼"
-    else:
-        return "מכירה 🔽"
 
 if st.button("קבל תחזית"):
     try:
         ticker = stocks[selected_stock]
-        interval = "1m"  # זה תמיד 1 דקה כרגע, אפשר לשפר בהמשך
+        interval = "1m"  # אפשר לשפר זאת לפי selected_time בעתיד
         data = yf.download(ticker, period='1d', interval=interval)
         if data.empty or 'Close' not in data:
             raise ValueError("אין נתוני סגירה זמינים")
+
         current_price = data['Close'].iloc[-1]
         trend = get_trend(data)
         if trend == "קנייה 🔼":
@@ -56,5 +60,8 @@ if st.button("קבל תחזית"):
 
         st.success(f"תחזית ל-{selected_stock} בטווח {selected_time}: {trend}")
         st.info(f'רווח/הפסד צפוי: ${profit:.2f} (סה"כ: ${amount + profit:.2f})')
+
+        st.line_chart(data['Close'])  # גרף של תנועת המחיר
+
     except Exception as e:
         st.error(f"אירעה שגיאה בחיזוי הנתונים: {str(e)}")
