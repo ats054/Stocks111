@@ -2,12 +2,11 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 import numpy as np
-import feedparser
 
 # הגדרת עמוד
 st.set_page_config(page_title="תחזית חכמה - בינה מלאכותית", layout="centered")
-st.title("🔮 תחזית זהב, מניות וקריפטו מבוססת בינה מלאכותית")
-st.write("בחר נכס, טווח זמן וסכום השקעה - ותקבל תחזית עם רמת ביטחון וחדשות רלוונטיות.")
+st.title("🔮 תחזית זהב, מניות וקריפטו")
+st.write("בחר נכס, טווח זמן וסכום השקעה - ותקבל תחזית + רמת ביטחון ותחזית רווח.")
 
 # רשימת נכסים
 stocks = {
@@ -32,7 +31,7 @@ intervals = {
     'שבוע': '1wk'
 }
 
-# פונקציה לחישוב רמת ביטחון
+# חישוב רמת ביטחון
 def calculate_confidence(data):
     confidence = 0
     total = 3
@@ -59,26 +58,12 @@ def calculate_confidence(data):
 
     return round((confidence / total) * 100)
 
-# פונקציה להצגת חדשות
-def show_news(query):
-    st.subheader("🗞 חדשות עדכניות")
-    try:
-        query_encoded = query.replace(" ", "+")
-        rss_url = f"https://news.google.com/rss/search?q={query_encoded}+stock&hl=en-US&gl=US&ceid=US:en"
-        feed = feedparser.parse(rss_url)
-        if not feed.entries:
-            st.info("לא נמצאו חדשות עדכניות.")
-        for entry in feed.entries[:5]:
-            st.markdown(f"🔹 [{entry.title}]({entry.link})")
-    except Exception as e:
-        st.warning(f"שגיאה בטעינת החדשות: {e}")
-
-# ממשק בחירה
+# ממשק
 selected_stock = st.selectbox("בחר נכס", list(stocks.keys()))
 selected_interval_label = st.selectbox("בחר טווח זמן", list(intervals.keys()))
 amount = st.number_input("סכום השקעה ($)", min_value=1, value=1000)
 
-# לחצן פעולה
+# לחצן חיזוי
 if st.button("קבל תחזית"):
     try:
         symbol = stocks[selected_stock]
@@ -97,8 +82,5 @@ if st.button("קבל תחזית"):
         st.success(f"תחזית ל-{selected_stock} בטווח {selected_interval_label}: {recommendation}")
         st.info(f"💰 רווח/הפסד צפוי: ${profit:.2f} (סה\"כ: ${expected_return:.2f})")
         st.warning(f"🔎 רמת ביטחון בתחזית: {confidence}%")
-
-        # חדשות
-        show_news(selected_stock)
     except Exception as e:
         st.error(f"אירעה שגיאה: {e}")
