@@ -10,23 +10,26 @@ def calculate_confidence(data):
 
     data['SMA5'] = data['Close'].rolling(window=5).mean()
     data['SMA20'] = data['Close'].rolling(window=20).mean()
-    if data['SMA5'].iloc[-1] > data['SMA20'].iloc[-1]:
-        confidence += 1
+    if not pd.isna(data['SMA5'].iloc[-1]) and not pd.isna(data['SMA20'].iloc[-1]):
+        if data['SMA5'].iloc[-1] > data['SMA20'].iloc[-1]:
+            confidence += 1
 
     delta = data['Close'].diff()
     gain = delta.where(delta > 0, 0).rolling(window=14).mean()
     loss = -delta.where(delta < 0, 0).rolling(window=14).mean()
     RS = gain / loss
     RSI = 100 - (100 / (1 + RS))
-    if RSI.iloc[-1] < 70:
+    last_rsi = RSI.dropna().iloc[-1] if not RSI.dropna().empty else None
+    if last_rsi is not None and last_rsi < 70:
         confidence += 1
 
     exp1 = data['Close'].ewm(span=12, adjust=False).mean()
     exp2 = data['Close'].ewm(span=26, adjust=False).mean()
     macd = exp1 - exp2
     signal = macd.ewm(span=9, adjust=False).mean()
-    if macd.iloc[-1] > signal.iloc[-1]:
-        confidence += 1
+    if not pd.isna(macd.iloc[-1]) and not pd.isna(signal.iloc[-1]):
+        if macd.iloc[-1] > signal.iloc[-1]:
+            confidence += 1
 
     return round((confidence / total_indicators) * 100)
 
