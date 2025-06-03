@@ -59,11 +59,9 @@ if st.button("קבל תחזית"):
         current_price = data['Close'].iloc[-1]
         trend = get_trend(data)
 
-        # תחזית
         predicted_price = current_price * (1.015 if trend == "קנייה 🔼" else 0.985)
         profit = predicted_price * amount / current_price - amount
 
-        # הצגת תוצאות
         st.success(f"תחזית ל־{selected_stock} בטווח {selected_time}: {trend}")
         st.info(f"רווח/הפסד צפוי: ${profit:.2f} (סה\"כ: ${amount + profit:.2f})")
 
