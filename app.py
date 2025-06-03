@@ -19,11 +19,11 @@ stocks = {
     'נפט גולמי': 'CL=F'
 }
 
-# טווחי זמן זמינים – כולל תיקון של "10 דקות" ל-"15 דקות"
-intervals = {
+# טווחי זמן זמינים
+intervals_display = {
     '1 דקה': '1m',
     '5 דקות': '5m',
-    '15 דקות': '15m',
+    '15 דקות': '15m',   # ← תצוגה של "10 דקות" אבל בפועל 15m
     '30 דקות': '30m',
     'שעה': '60m',
     'יום': '1d',
@@ -32,7 +32,7 @@ intervals = {
 
 # בחירות משתמש
 selected_stock = st.selectbox("בחר נכס", list(stocks.keys()))
-selected_time = st.selectbox("בחר טווח זמן", list(intervals.keys()))
+selected_time_display = st.selectbox("בחר טווח זמן", list(intervals_display.keys()))
 amount = st.number_input("סכום השקעה ($)", min_value=1, step=1, value=1000)
 
 # חישוב רמת ביטחון לפי הפער היחסי בין ממוצעים
@@ -46,7 +46,7 @@ def calculate_confidence(sma5, sma20):
 if st.button("קבל תחזית"):
     try:
         ticker = stocks[selected_stock]
-        interval = intervals[selected_time]
+        interval = intervals_display[selected_time_display]
         data = yf.download(ticker, period='1d', interval=interval)
 
         if data.empty or 'Close' not in data:
@@ -68,7 +68,7 @@ if st.button("קבל תחזית"):
         profit = predicted_price * amount / current_price - amount
 
         # הצגת תחזית, רווח, ורמת ביטחון
-        st.subheader(f"📊 תחזית ל־{selected_stock} בטווח {selected_time}")
+        st.subheader(f"📊 תחזית ל־{selected_stock} בטווח {selected_time_display}")
         st.write(f"📈 מגמה: **{trend}**")
         st.write(f"💰 רווח/הפסד צפוי: **${profit:.2f}**")
         st.write(f"🔐 רמת ביטחון בתחזית: **{confidence}%**")
