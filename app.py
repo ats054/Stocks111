@@ -21,30 +21,24 @@ stocks = {
 }
 
 times = ['1 דקה', '5 דקות', '10 דקות', '30 דקות', 'שעה', 'יום', 'שבוע']
-
 selected_stock = st.selectbox("בחר נכס", list(stocks.keys()))
 selected_time = st.selectbox("בחר טווח זמן", times)
 amount = st.number_input("סכום השקעה ($)", min_value=1, step=1, value=1000)
 
 if st.button("קבל תחזית"):
     try:
-        # הגדרת הטיקר מתוך הבחירה
         ticker = stocks[selected_stock]
-
-        # הורדת נתונים
         data = yf.download(ticker, period='1d', interval='1m')
 
-        if data.empty or 'Close' not in data.columns:
-            raise ValueError("אין נתוני סגירה זמינים")
+        if data.empty or 'Close' not in data:
+            raise ValueError("אין נתונים זמינים")
 
-        # חישוב ממוצעים נעים
         data['SMA5'] = data['Close'].rolling(window=5).mean()
         data['SMA20'] = data['Close'].rolling(window=20).mean()
-
         current_price = data['Close'].iloc[-1]
 
         if pd.isna(data['SMA5'].iloc[-1]) or pd.isna(data['SMA20'].iloc[-1]):
-            trend = "נתונים לא מספיקים למגמה"
+            trend = "לא ניתן לחזות (נתונים חסרים)"
         elif data['SMA5'].iloc[-1] > data['SMA20'].iloc[-1]:
             trend = "קנייה 🔼"
         else:
@@ -58,4 +52,4 @@ if st.button("קבל תחזית"):
         st.line_chart(data['Close'])
 
     except Exception as e:
-        st.error(f"שגיאה: {str(e)}")
+        st.error(f"שגיאה: {e}")
