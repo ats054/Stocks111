@@ -4,10 +4,10 @@ import pandas as pd
 import numpy as np
 import feedparser
 
-# הגדרת העמוד
-st.set_page_config(page_title="מערכת חיזוי חכמה", layout="centered")
-st.title("🤖 תחזית חכמה - זהב, מניות, קריפטו וחדשות")
-st.write("בחר נכס, טווח זמן וסכום השקעה - ותקבל תחזית חכמה עם ניתוח גרפי + חדשות חמות.")
+# הגדרת עמוד
+st.set_page_config(page_title="תחזית חכמה - בינה מלאכותית", layout="centered")
+st.title("🔮 תחזית זהב, מניות וקריפטו מבוססת בינה מלאכותית")
+st.write("בחר נכס, טווח זמן וסכום השקעה - ותקבל תחזית עם רמת ביטחון וחדשות רלוונטיות.")
 
 # רשימת נכסים
 stocks = {
@@ -32,7 +32,7 @@ intervals = {
     'שבוע': '1wk'
 }
 
-# חישוב רמת ביטחון
+# פונקציה לחישוב רמת ביטחון
 def calculate_confidence(data):
     confidence = 0
     total = 3
@@ -59,19 +59,26 @@ def calculate_confidence(data):
 
     return round((confidence / total) * 100)
 
-# הצגת חדשות
+# פונקציה להצגת חדשות
 def show_news(query):
     st.subheader("🗞 חדשות עדכניות")
-    rss_url = f"https://news.google.com/rss/search?q={query}+stock&hl=en-US&gl=US&ceid=US:en"
-    feed = feedparser.parse(rss_url)
-    for entry in feed.entries[:5]:
-        st.markdown(f"🔹 [{entry.title}]({entry.link})")
+    try:
+        query_encoded = query.replace(" ", "+")
+        rss_url = f"https://news.google.com/rss/search?q={query_encoded}+stock&hl=en-US&gl=US&ceid=US:en"
+        feed = feedparser.parse(rss_url)
+        if not feed.entries:
+            st.info("לא נמצאו חדשות עדכניות.")
+        for entry in feed.entries[:5]:
+            st.markdown(f"🔹 [{entry.title}]({entry.link})")
+    except Exception as e:
+        st.warning(f"שגיאה בטעינת החדשות: {e}")
 
-# ממשק משתמש
+# ממשק בחירה
 selected_stock = st.selectbox("בחר נכס", list(stocks.keys()))
 selected_interval_label = st.selectbox("בחר טווח זמן", list(intervals.keys()))
 amount = st.number_input("סכום השקעה ($)", min_value=1, value=1000)
 
+# לחצן פעולה
 if st.button("קבל תחזית"):
     try:
         symbol = stocks[selected_stock]
@@ -83,20 +90,15 @@ if st.button("קבל תחזית"):
 
         current_price = data['Close'].iloc[-1]
         confidence = calculate_confidence(data)
-        if confidence >= 66:
-            recommendation = "קנייה 🔼"
-        elif confidence < 50:
-            recommendation = "להימנע ❌"
-        else:
-            recommendation = "מכירה 🔽"
+        recommendation = "קנייה 🔼" if confidence >= 66 else "להימנע ❌" if confidence < 50 else "מכירה 🔽"
         expected_return = amount * (1 + (confidence - 50) / 100)
         profit = expected_return - amount
 
         st.success(f"תחזית ל-{selected_stock} בטווח {selected_interval_label}: {recommendation}")
-        st.info(f"סכום השקעה: ${amount:.2f} | רווח/הפסד צפוי: ${profit:.2f}")
-        st.warning(f"רמת ביטחון בתחזית: {confidence}%")
+        st.info(f"💰 רווח/הפסד צפוי: ${profit:.2f} (סה\"כ: ${expected_return:.2f})")
+        st.warning(f"🔎 רמת ביטחון בתחזית: {confidence}%")
 
-        show_news(selected_stock.split()[0])
-
+        # חדשות
+        show_news(selected_stock)
     except Exception as e:
         st.error(f"אירעה שגיאה: {e}")
