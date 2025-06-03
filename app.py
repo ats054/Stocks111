@@ -26,13 +26,22 @@ selected_stock = st.selectbox("בחר נכס", list(stocks.keys()))
 selected_time = st.selectbox("בחר טווח זמן", times)
 amount = st.number_input("סכום השקעה ($)", min_value=1, step=1, value=1000)
 
-def get_trend(data):
+def get_trend_and_prediction(data, current_price):
     data['SMA5'] = data['Close'].rolling(window=5).mean()
     data['SMA20'] = data['Close'].rolling(window=20).mean()
-    if data['SMA5'].iloc[-1] > data['SMA20'].iloc[-1]:
-        return "קנייה 🔼"
+    sma5 = data['SMA5'].iloc[-1]
+    sma20 = data['SMA20'].iloc[-1]
+
+    trend = "קנייה 🔼" if sma5 > sma20 else "מכירה 🔽"
+    diff_ratio = abs(sma5 - sma20) / current_price
+
+    # תחזית מחיר דינאמית
+    if trend == "קנייה 🔼":
+        predicted_price = current_price * (1 + diff_ratio)
     else:
-        return "מכירה 🔽"
+        predicted_price = current_price * (1 - diff_ratio)
+
+    return trend, predicted_price
 
 if st.button("קבל תחזית"):
     try:
@@ -41,8 +50,7 @@ if st.button("קבל תחזית"):
         if data.empty or 'Close' not in data:
             raise ValueError("אין נתוני סגירה זמינים")
         current_price = data['Close'].iloc[-1]
-        trend = get_trend(data)
-        predicted_price = current_price * (1.01 if trend == "קנייה 🔼" else 0.99)
+        trend, predicted_price = get_trend_and_prediction(data, current_price)
         profit = predicted_price * amount / current_price - amount
 
         st.success(f"תחזית ל-{selected_stock} בטווח {selected_time}: {trend}")
