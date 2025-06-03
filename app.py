@@ -83,7 +83,12 @@ if st.button("קבל תחזית"):
 
         current_price = data['Close'].iloc[-1]
         confidence = calculate_confidence(data)
-        recommendation = "קנייה 🔼" if confidence >= 66 else "להימנע ❌" if confidence < 50 else "מכירה 🔽"
+        if confidence >= 66:
+            recommendation = "קנייה 🔼"
+        elif confidence < 50:
+            recommendation = "להימנע ❌"
+        else:
+            recommendation = "מכירה 🔽"
         expected_return = amount * (1 + (confidence - 50) / 100)
         profit = expected_return - amount
 
