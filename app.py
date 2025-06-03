@@ -13,7 +13,7 @@ stocks = {
     'ת"א 35': 'TA35.TA',
     'Nvidia': 'NVDA',
     'ביטקוין (Bitcoin)': 'BTC-USD',
-    'את'ריום (Ethereum)': 'ETH-USD',
+"את'ריום (Ethereum)": 'ETH-USD',
     'זהב Plus500': 'XAU/USD',
     'נפט Plus500': 'XTI/USD',
     'מדד US Tech 100': 'NDX'
