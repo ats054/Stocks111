@@ -1,49 +1,40 @@
 import streamlit as st
 import yfinance as yf
 import pandas as pd
-import numpy as np
 
-st.set_page_config(page_title="תחזית זהב, מניות וקריפטו", layout="centered")
-st.title("🔮 תחזית חכמה - זהב, מניות, קריפטו ו־Plus500")
-st.write("בחר נכס, טווח זמן וסכום השקעה - וקבל תחזית עם חיווי מיידי.")
+st.set_page_config(page_title="תחזית מניות וזהב", layout="centered")
+st.title("📈 תחזית חכמה - מניות, זהב וקריפטו")
 
 stocks = {
-    'נאסד"ק (NASDAQ)': '^IXIC',
+    'נאסד"ק': '^IXIC',
     'S&P 500': '^GSPC',
-    'זהב (Gold)': 'GC=F',
-    'נאסד"ק 100 (NDX)': '^NDX',
-    'ת"א 35': 'TA35.TA',
-    'Nvidia': 'NVDA',
-    'ביטקוין (Bitcoin)': 'BTC-USD',
-    "את'ריום (Ethereum)": 'ETH-USD',
-    'זהב Plus500': 'XAU/USD',
-    'נפט Plus500': 'XTI/USD',
-    'מדד US Tech 100': '^NDX'
+    'זהב': 'GC=F',
+    'ביטקוין': 'BTC-USD',
+    'אתריום': 'ETH-USD'
 }
 
 intervals = {
-    '1 דקה': '1m',
     '5 דקות': '5m',
-    '10 דקות': '10m',
     '30 דקות': '30m',
-    'שעה': '60m',
-    'יום': '1d',
-    'שבוע': '1wk'
+    'יום': '1d'
 }
 
 selected_stock = st.selectbox("בחר נכס", list(stocks.keys()))
 selected_time = st.selectbox("בחר טווח זמן", list(intervals.keys()))
-amount = st.number_input("סכום השקעה ($)", min_value=1, step=1, value=1000)
+amount = st.number_input("סכום השקעה ($)", min_value=1, value=1000)
 
-def get_trend(data):
-    data['SMA5'] = data['Close'].rolling(window=5).mean()
-    data['SMA20'] = data['Close'].rolling(window=20).mean()
-    if pd.isna(data['SMA5'].iloc[-1]) or pd.isna(data['SMA20'].iloc[-1]):
-        return "לא ניתן לקבוע מגמה", None
-    elif data['SMA5'].iloc[-1] > data['SMA20'].iloc[-1]:
-        return "קנייה 🔼", 1.015
+def analyze_trend(data):
+    data['SMA5'] = data['Close'].rolling(5).mean()
+    data['SMA20'] = data['Close'].rolling(20).mean()
+    sma5 = float(data['SMA5'].iloc[-1]) if pd.notna(data['SMA5'].iloc[-1]) else None
+    sma20 = float(data['SMA20'].iloc[-1]) if pd.notna(data['SMA20'].iloc[-1]) else None
+
+    if sma5 is None or sma20 is None:
+        return "לא מספיק נתונים", 1.00
+    elif sma5 > sma20:
+        return "קנייה 🔼", 1.02
     else:
-        return "מכירה 🔽", 0.985
+        return "מכירה 🔽", 0.98
 
 if st.button("קבל תחזית"):
     try:
@@ -51,24 +42,16 @@ if st.button("קבל תחזית"):
         interval = intervals[selected_time]
         data = yf.download(ticker, period='1d', interval=interval)
         if data.empty or 'Close' not in data:
-            raise ValueError("אין נתוני סגירה זמינים")
+            raise ValueError("אין נתונים זמינים")
 
-        close_series = data['Close'].dropna()
-        if close_series.empty:
-            raise ValueError("לא נמצאו מחירי סגירה תקפים.")
+        close_price = data['Close'].dropna().iloc[-1]
+        current_price = float(close_price)
+        trend, multiplier = analyze_trend(data)
+        predicted_price = current_price * multiplier
+        profit = predicted_price - current_price
+        profit_dollars = profit * (amount / current_price)
 
-        current_price = float(close_series.iloc[-1])
-        trend, multiplier = get_trend(data)
-
-        if multiplier is None:
-            st.warning("אין מספיק נתונים לקביעת מגמה.")
-        else:
-            predicted_price = float(current_price * multiplier)
-            profit = float(predicted_price * amount / current_price - amount)
-            total = float(amount + profit)
-
-            st.success(f"בטווח {selected_time}: {trend} תחזית ל-{selected_stock}")
-            st.info(f'רווח/הפסד צפוי: ${profit:.2f} (סה"כ: ${total:.2f})')
-
+        st.success(f"תחזית ל-{selected_stock}: {trend}")
+        st.info(f"רווח/הפסד צפוי: ${profit_dollars:.2f} (סה\"כ: ${(amount + profit_dollars):.2f})")
     except Exception as e:
-        st.error(f"אירעה שגיאה בחיזוי הנתונים: {str(e)}")
+        st.error(f"שגיאה: {str(e)}")
