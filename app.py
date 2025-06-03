@@ -59,8 +59,13 @@ if st.button("קבל תחזית"):
         st.success(f"תחזית ל-{selected_stock} בטווח {selected_time}: {trend}")
         st.info(f'רווח/הפסד צפוי: ${profit:.2f} (סה"כ: ${amount + profit:.2f})')
 
-        # גרף המחירים
         st.subheader("📈 גרף מחירים:")
         fig, ax = plt.subplots()
         data['Close'].plot(ax=ax, label='מחיר נוכחי')
-        data['
+        data['SMA5'].plot(ax=ax, label='SMA5')
+        data['SMA20'].plot(ax=ax, label='SMA20')
+        ax.legend()
+        st.pyplot(fig)
+
+    except Exception as e:
+        st.error(f"אירעה שגיאה בחיזוי הנתונים: {str(e)}")
