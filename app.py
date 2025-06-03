@@ -47,8 +47,7 @@ def calculate_confidence(data):
     loss = -delta.where(delta < 0, 0).rolling(window=14).mean()
     RS = gain / loss
     RSI = 100 - (100 / (1 + RS))
-    rsi_value = RSI.iloc[-1]
-    if rsi_value < 70:
+    if RSI.iloc[-1] < 70:
         confidence += 1
 
     exp1 = data['Close'].ewm(span=12, adjust=False).mean()
@@ -89,7 +88,7 @@ if st.button("קבל תחזית"):
         profit = expected_return - amount
 
         st.success(f"תחזית ל-{selected_stock} בטווח {selected_interval_label}: {recommendation}")
-        st.info(f"סכום השקעה: ${amount} | רווח/הפסד צפוי: ${profit:.2f}")
+        st.info(f"סכום השקעה: ${amount:.2f} | רווח/הפסד צפוי: ${profit:.2f}")
         st.warning(f"רמת ביטחון בתחזית: {confidence}%")
 
         show_news(selected_stock.split()[0])
