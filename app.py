@@ -1,6 +1,7 @@
 import streamlit as st
 import yfinance as yf
 import pandas as pd
+import numpy as np
 
 st.set_page_config(page_title="תחזית זהב, מניות וקריפטו", layout="centered")
 st.title("🔮 תחזית חכמה - זהב, מניות, קריפטו ו־Plus500")
@@ -52,15 +53,19 @@ if st.button("קבל תחזית"):
         if data.empty or 'Close' not in data:
             raise ValueError("אין נתוני סגירה זמינים")
 
-        current_price = float(data['Close'].iloc[-1])
+        close_series = data['Close'].dropna()
+        if close_series.empty:
+            raise ValueError("לא נמצאו מחירי סגירה תקפים.")
+
+        current_price = float(close_series.iloc[-1])
         trend, multiplier = get_trend(data)
 
         if multiplier is None:
             st.warning("אין מספיק נתונים לקביעת מגמה.")
         else:
-            predicted_price = current_price * multiplier
-            profit = predicted_price * amount / current_price - amount
-            total = amount + profit
+            predicted_price = float(current_price * multiplier)
+            profit = float(predicted_price * amount / current_price - amount)
+            total = float(amount + profit)
 
             st.success(f"בטווח {selected_time}: {trend} תחזית ל-{selected_stock}")
             st.info(f'רווח/הפסד צפוי: ${profit:.2f} (סה"כ: ${total:.2f})')
