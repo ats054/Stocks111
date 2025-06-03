@@ -1,12 +1,12 @@
 import streamlit as st
 import yfinance as yf
 import pandas as pd
-import matplotlib.pyplot as plt
 
 st.set_page_config(page_title="תחזית זהב, מניות וקריפטו", layout="centered")
-st.title("🔮 תחזית חכמה - זהב, מניות, קריפטו ו־Plus500")
+st.title("🔮 תחזית חכמה - זהב, מניות וקריפטו")
 st.write("בחר נכס, טווח זמן וסכום השקעה - וקבל תחזית עם חיווי מיידי.")
 
+# נכסים זמינים
 stocks = {
     'נאסד"ק (NASDAQ)': '^IXIC',
     'S&P 500': '^GSPC',
@@ -16,9 +16,10 @@ stocks = {
     'Nvidia': 'NVDA',
     'ביטקוין (Bitcoin)': 'BTC-USD',
     "את'ריום (Ethereum)": 'ETH-USD',
-    'מדד US Tech 100': '^NDX'
+    'נפט גולמי': 'CL=F'
 }
 
+# טווחי זמן זמינים
 intervals = {
     '1 דקה': '1m',
     '5 דקות': '5m',
@@ -29,25 +30,19 @@ intervals = {
     'שבוע': '1wk'
 }
 
+# בחירות משתמש
 selected_stock = st.selectbox("בחר נכס", list(stocks.keys()))
 selected_time = st.selectbox("בחר טווח זמן", list(intervals.keys()))
 amount = st.number_input("סכום השקעה ($)", min_value=1, step=1, value=1000)
 
-def get_forecast(data):
-    data['SMA5'] = data['Close'].rolling(window=5).mean()
-    data['SMA20'] = data['Close'].rolling(window=20).mean()
-    last = len(data) - 1
+# חישוב רמת ביטחון לפי הפער היחסי בין ממוצעים
+def calculate_confidence(sma5, sma20):
+    gap = abs(sma5 - sma20)
+    avg = (sma5 + sma20) / 2
+    confidence = min(100, max(0, (gap / avg) * 100))
+    return round(confidence, 2)
 
-    if pd.isna(data['SMA5'].iloc[last]) or pd.isna(data['SMA20'].iloc[last]):
-        return "לא בטוח", "❓", 0.5
-
-    if data['SMA5'].iloc[last] > data['SMA20'].iloc[last]:
-        confidence = min(abs(data['SMA5'].iloc[last] - data['SMA20'].iloc[last]) / data['SMA20'].iloc[last], 0.25)
-        return "קנייה", "🔼", round(0.7 + confidence, 2)
-    else:
-        confidence = min(abs(data['SMA20'].iloc[last] - data['SMA5'].iloc[last]) / data['SMA5'].iloc[last], 0.25)
-        return "מכירה", "🔽", round(0.7 + confidence, 2)
-
+# פעולה בעת לחיצה על כפתור
 if st.button("קבל תחזית"):
     try:
         ticker = stocks[selected_stock]
@@ -57,16 +52,26 @@ if st.button("קבל תחזית"):
         if data.empty or 'Close' not in data:
             raise ValueError("אין נתוני סגירה זמינים")
 
-        direction, icon, confidence = get_forecast(data)
-        latest_price = data['Close'].iloc[-1]
-        predicted_price = latest_price * (1.01 if direction == "קנייה" else 0.99)
-        profit = predicted_price * amount / latest_price - amount
+        data['SMA5'] = data['Close'].rolling(window=5).mean()
+        data['SMA20'] = data['Close'].rolling(window=20).mean()
 
-        st.success(f"בטווח {selected_time}: {direction} {icon} תחזית ל־{selected_stock}")
-        st.info(f'רווח/הפסד צפוי: ${profit:.2f} (סה"כ: ${amount + profit:.2f})')
-        st.warning(f'רמת ביטחון בתחזית: {confidence * 100:.1f}%')
+        if pd.isna(data['SMA5'].iloc[-1]) or pd.isna(data['SMA20'].iloc[-1]):
+            raise ValueError("אין מספיק נתונים לחישוב מגמה")
 
-        st.line_chart(data['Close'])
+        sma5 = data['SMA5'].iloc[-1]
+        sma20 = data['SMA20'].iloc[-1]
+        trend = "קנייה 🔼" if sma5 > sma20 else "מכירה 🔽"
+        confidence = calculate_confidence(sma5, sma20)
+
+        current_price = data['Close'].iloc[-1]
+        predicted_price = current_price * (1 + 0.01 if trend == "קנייה 🔼" else 1 - 0.01)
+        profit = predicted_price * amount / current_price - amount
+
+        # הצגת תחזית, רווח, ורמת ביטחון
+        st.subheader(f"📊 תחזית ל־{selected_stock} בטווח {selected_time}")
+        st.write(f"📈 מגמה: **{trend}**")
+        st.write(f"💰 רווח/הפסד צפוי: **${profit:.2f}**")
+        st.write(f"🔐 רמת ביטחון בתחזית: **{confidence}%**")
 
     except Exception as e:
         st.error(f"אירעה שגיאה בחיזוי הנתונים: {str(e)}")
