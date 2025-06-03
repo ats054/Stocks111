@@ -19,11 +19,11 @@ stocks = {
     'נפט גולמי': 'CL=F'
 }
 
-# טווחי זמן זמינים
+# טווחי זמן זמינים – כולל תיקון של "10 דקות" ל-"15 דקות"
 intervals = {
     '1 דקה': '1m',
     '5 דקות': '5m',
-    '10 דקות': '10m',
+    '15 דקות': '15m',
     '30 דקות': '30m',
     'שעה': '60m',
     'יום': '1d',
@@ -49,12 +49,8 @@ if st.button("קבל תחזית"):
         interval = intervals[selected_time]
         data = yf.download(ticker, period='1d', interval=interval)
 
-        # ניסיון נוסף אם אין נתונים
         if data.empty or 'Close' not in data:
-            data = yf.download(ticker, period='5d', interval='1d')
-
-        if data.empty or 'Close' not in data:
-            raise ValueError("לא ניתן לקבל נתונים עבור הנכס הזה בטווח הזמן שנבחר.")
+            raise ValueError("אין נתוני סגירה זמינים")
 
         data['SMA5'] = data['Close'].rolling(window=5).mean()
         data['SMA20'] = data['Close'].rolling(window=20).mean()
