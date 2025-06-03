@@ -23,7 +23,7 @@ stocks = {
 intervals = {
     '1 דקה': '1m',
     '5 דקות': '5m',
-    '10 דקות': '10m',
+    '10 דקות': '15m',
     '30 דקות': '30m',
     'שעה': '60m',
     'יום': '1d',
@@ -47,16 +47,19 @@ if st.button("קבל תחזית"):
     try:
         ticker = stocks[selected_stock]
         interval = intervals[selected_time]
-        data = yf.download(ticker, period='1d', interval=interval)
+        st.info(f"⏳ מוריד נתונים עבור {ticker} עם אינטרוול {interval}...")
 
-        if data.empty or 'Close' not in data:
-            raise ValueError("אין נתוני סגירה זמינים")
+        # שינוי ל-5 ימים כדי לאפשר מספיק מידע ל-SMA
+        data = yf.download(ticker, period='5d', interval=interval)
+
+        if data.empty or 'Close' not in data.columns:
+            raise ValueError("❌ אין נתוני סגירה זמינים עבור הנכס והטווח שנבחרו.")
 
         data['SMA5'] = data['Close'].rolling(window=5).mean()
         data['SMA20'] = data['Close'].rolling(window=20).mean()
 
         if pd.isna(data['SMA5'].iloc[-1]) or pd.isna(data['SMA20'].iloc[-1]):
-            raise ValueError("אין מספיק נתונים לחישוב מגמה")
+            raise ValueError("⚠️ אין מספיק נקודות נתונים לחישוב ממוצעים נעים.")
 
         sma5 = data['SMA5'].iloc[-1]
         sma20 = data['SMA20'].iloc[-1]
@@ -64,7 +67,7 @@ if st.button("קבל תחזית"):
         confidence = calculate_confidence(sma5, sma20)
 
         current_price = data['Close'].iloc[-1]
-        predicted_price = current_price * (1.01 if trend == "קנייה 🔼" else 0.99)  # ✅ תיקון כאן!
+        predicted_price = current_price * (1.01 if trend == "קנייה 🔼" else 0.99)
         profit = predicted_price * amount / current_price - amount
 
         # הצגת תחזית, רווח, ורמת ביטחון
