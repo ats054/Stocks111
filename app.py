@@ -2,11 +2,14 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 import numpy as np
+import feedparser
 
-st.set_page_config(page_title="תחזית בינה מלאכותית - זהב, מניות וקריפטו", layout="centered")
-st.title("🤖 תחזית חכמה - זהב, מניות וקריפטו")
-st.write("בחר נכס, טווח זמן וסכום השקעה - וקבל תחזית, גרף, רווח צפוי ורמת ביטחון.")
+# הגדרות עמוד
+st.set_page_config(page_title="מערכת חיזוי חכמה", layout="centered")
+st.title("🤖 תחזית חכמה - זהב, מניות, קריפטו וחדשות")
+st.write("בחר נכס, טווח זמן וסכום השקעה - ותקבל תחזית חכמה עם ניתוח גרפי + חדשות חמות.")
 
+# רשימת נכסים
 stocks = {
     'נאסד"ק (NASDAQ)': '^IXIC',
     'S&P 500': '^GSPC',
@@ -18,6 +21,7 @@ stocks = {
     "את'ריום (Ethereum)": 'ETH-USD'
 }
 
+# טווחי זמן
 intervals = {
     '1 דקה': '1m',
     '5 דקות': '5m',
@@ -28,9 +32,10 @@ intervals = {
     'שבוע': '1wk'
 }
 
+# חישוב רמת ביטחון
 def calculate_confidence(data):
     confidence = 0
-    total_indicators = 3
+    total = 3
 
     data['SMA5'] = data['Close'].rolling(window=5).mean()
     data['SMA20'] = data['Close'].rolling(window=20).mean()
@@ -52,8 +57,17 @@ def calculate_confidence(data):
     if macd.iloc[-1] > signal.iloc[-1]:
         confidence += 1
 
-    return round((confidence / total_indicators) * 100)
+    return round((confidence / total) * 100)
 
+# הצגת חדשות
+def show_news(query):
+    st.subheader("🗞 חדשות עדכניות")
+    rss_url = f"https://news.google.com/rss/search?q={query}+stock&hl=en-US&gl=US&ceid=US:en"
+    feed = feedparser.parse(rss_url)
+    for entry in feed.entries[:5]:
+        st.markdown(f"🔹 [{entry.title}]({entry.link})")
+
+# ממשק משתמש
 selected_stock = st.selectbox("בחר נכס", list(stocks.keys()))
 selected_interval_label = st.selectbox("בחר טווח זמן", list(intervals.keys()))
 amount = st.number_input("סכום השקעה ($)", min_value=1, value=1000)
@@ -70,13 +84,14 @@ if st.button("קבל תחזית"):
         current_price = data['Close'].iloc[-1]
         confidence = calculate_confidence(data)
         recommendation = "קנייה 🔼" if confidence >= 66 else "להימנע ❌" if confidence < 50 else "מכירה 🔽"
-        expected_return = amount * (1 + (confidence - 50)/100)
+        expected_return = amount * (1 + (confidence - 50) / 100)
         profit = expected_return - amount
 
         st.success(f"תחזית ל-{selected_stock} בטווח {selected_interval_label}: {recommendation}")
         st.info(f"סכום השקעה: ${amount} | רווח/הפסד צפוי: ${profit:.2f}")
         st.warning(f"רמת ביטחון בתחזית: {confidence}%")
-        st.line_chart(data['Close'])
+
+        show_news(selected_stock.split()[0])  # הצגת חדשות
 
     except Exception as e:
         st.error(f"אירעה שגיאה: {e}")
