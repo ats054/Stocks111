@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import feedparser
 
-# הגדרות עמוד
+# הגדרת העמוד
 st.set_page_config(page_title="מערכת חיזוי חכמה", layout="centered")
 st.title("🤖 תחזית חכמה - זהב, מניות, קריפטו וחדשות")
 st.write("בחר נכס, טווח זמן וסכום השקעה - ותקבל תחזית חכמה עם ניתוח גרפי + חדשות חמות.")
@@ -47,7 +47,8 @@ def calculate_confidence(data):
     loss = -delta.where(delta < 0, 0).rolling(window=14).mean()
     RS = gain / loss
     RSI = 100 - (100 / (1 + RS))
-    if RSI.iloc[-1] < 70:
+    rsi_value = RSI.iloc[-1]
+    if rsi_value < 70:
         confidence += 1
 
     exp1 = data['Close'].ewm(span=12, adjust=False).mean()
@@ -78,7 +79,7 @@ if st.button("קבל תחזית"):
         interval = intervals[selected_interval_label]
         data = yf.download(symbol, period='5d', interval=interval)
 
-        if data.empty:
+        if data.empty or 'Close' not in data:
             raise ValueError("אין נתוני סגירה זמינים")
 
         current_price = data['Close'].iloc[-1]
@@ -91,7 +92,7 @@ if st.button("קבל תחזית"):
         st.info(f"סכום השקעה: ${amount} | רווח/הפסד צפוי: ${profit:.2f}")
         st.warning(f"רמת ביטחון בתחזית: {confidence}%")
 
-        show_news(selected_stock.split()[0])  # הצגת חדשות
+        show_news(selected_stock.split()[0])
 
     except Exception as e:
         st.error(f"אירעה שגיאה: {e}")
