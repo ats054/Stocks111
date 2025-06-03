@@ -3,38 +3,10 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 
-# הגדרת עמוד
-st.set_page_config(page_title="תחזית חכמה - בינה מלאכותית", layout="centered")
-st.title("🔮 תחזית זהב, מניות וקריפטו")
-st.write("בחר נכס, טווח זמן וסכום השקעה - ותקבל תחזית + רמת ביטחון ותחזית רווח.")
-
-# רשימת נכסים
-stocks = {
-    'נאסד"ק (NASDAQ)': '^IXIC',
-    'S&P 500': '^GSPC',
-    'זהב (Gold)': 'GC=F',
-    'נאסד"ק 100 (NDX)': '^NDX',
-    'ת"א 35': 'TA35.TA',
-    'Nvidia': 'NVDA',
-    'ביטקוין (Bitcoin)': 'BTC-USD',
-    "את'ריום (Ethereum)": 'ETH-USD'
-}
-
-# טווחי זמן
-intervals = {
-    '1 דקה': '1m',
-    '5 דקות': '5m',
-    '10 דקות': '15m',
-    '30 דקות': '30m',
-    'שעה': '60m',
-    'יום': '1d',
-    'שבוע': '1wk'
-}
-
-# חישוב רמת ביטחון
+# פונקציה לחישוב רמת ביטחון
 def calculate_confidence(data):
     confidence = 0
-    total = 3
+    total_indicators = 3
 
     data['SMA5'] = data['Close'].rolling(window=5).mean()
     data['SMA20'] = data['Close'].rolling(window=20).mean()
@@ -56,31 +28,56 @@ def calculate_confidence(data):
     if macd.iloc[-1] > signal.iloc[-1]:
         confidence += 1
 
-    return round((confidence / total) * 100)
+    return round((confidence / total_indicators) * 100)
 
-# ממשק
+# רשימת נכסים
+stocks = {
+    'נאסד"ק (NASDAQ)': '^IXIC',
+    'S&P 500': '^GSPC',
+    'זהב (Gold)': 'GC=F',
+    'נאסד"ק 100 (NDX)': '^NDX',
+    'ת"א 35': 'TA35.TA',
+    'Nvidia': 'NVDA',
+    'ביטקוין (Bitcoin)': 'BTC-USD',
+    "את'ריום (Ethereum)": 'ETH-USD'
+}
+
+intervals = {
+    '1 דקה': '1m',
+    '5 דקות': '5m',
+    '10 דקות': '15m',
+    '30 דקות': '30m',
+    'שעה': '60m',
+    'יום': '1d',
+    'שבוע': '1wk'
+}
+
+# ממשק משתמש
+st.set_page_config(page_title="תחזית בינה מלאכותית - מדויקת", layout="centered")
+st.title("🤖 תחזית חכמה - זהב, מניות וקריפטו")
+st.write("בחר נכס, טווח זמן וסכום השקעה - ותקבל תחזית מדויקת + רמת ביטחון.")
+
 selected_stock = st.selectbox("בחר נכס", list(stocks.keys()))
 selected_interval_label = st.selectbox("בחר טווח זמן", list(intervals.keys()))
 amount = st.number_input("סכום השקעה ($)", min_value=1, value=1000)
 
-# לחצן חיזוי
 if st.button("קבל תחזית"):
     try:
         symbol = stocks[selected_stock]
         interval = intervals[selected_interval_label]
         data = yf.download(symbol, period='5d', interval=interval)
 
-        if data.empty or 'Close' not in data:
+        if data.empty:
             raise ValueError("אין נתוני סגירה זמינים")
 
         current_price = data['Close'].iloc[-1]
         confidence = calculate_confidence(data)
         recommendation = "קנייה 🔼" if confidence >= 66 else "להימנע ❌" if confidence < 50 else "מכירה 🔽"
-        expected_return = amount * (1 + (confidence - 50) / 100)
+        expected_return = amount * (1 + (confidence - 50)/100)
         profit = expected_return - amount
 
         st.success(f"תחזית ל-{selected_stock} בטווח {selected_interval_label}: {recommendation}")
-        st.info(f"💰 רווח/הפסד צפוי: ${profit:.2f} (סה\"כ: ${expected_return:.2f})")
-        st.warning(f"🔎 רמת ביטחון בתחזית: {confidence}%")
+        st.info(f"סכום השקעה: ${amount} | רווח/הפסד צפוי: ${profit:.2f}")
+        st.warning(f"רמת ביטחון בתחזית: {confidence}%")
     except Exception as e:
         st.error(f"אירעה שגיאה: {e}")
